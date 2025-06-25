@@ -18,6 +18,9 @@ fi
 output_dir="/Users/jarvis/Desktop/aivideos/shortmovies/converted"
 mkdir -p "$output_dir"
 
+# Cookies file path
+cookies_file="$HOME/Downloads/cookies.txt"
+
 # Read each URL from the file
 while IFS= read -r video_url || [ -n "$video_url" ]; do
     # Skip empty lines
@@ -28,12 +31,12 @@ while IFS= read -r video_url || [ -n "$video_url" ]; do
     echo "🔍 Processing: $video_url"
 
     # Predict actual filename yt-dlp will generate
-    downloaded_file=$(yt-dlp --print "%(title)s.%(ext)s" -f 'bv*[ext=mp4]+ba[ext=m4a]/best[ext=mp4]/best' "$video_url")
+    downloaded_file=$(yt-dlp --cookies "$cookies_file" --print "%(title)s.%(ext)s" -f 'bv*[ext=mp4]+ba[ext=m4a]/best[ext=mp4]/best' "$video_url")
     base_name="${downloaded_file%.*}"
     converted_file="${output_dir}/${base_name}_qt.mp4"
 
     echo "⬇️ Downloading: $downloaded_file"
-    yt-dlp -f 'bv*[ext=mp4]+ba[ext=m4a]/best[ext=mp4]/best' \
+    yt-dlp --cookies "$cookies_file" -f 'bv*[ext=mp4]+ba[ext=m4a]/best[ext=mp4]/best' \
            --merge-output-format mp4 \
            -o "$downloaded_file" \
            "$video_url"
@@ -49,8 +52,6 @@ while IFS= read -r video_url || [ -n "$video_url" ]; do
 
         ffmpeg -nostdin -y -i "$downloaded_file" -c:v libx264 -c:a aac -movflags +faststart "$converted_file"
 
-
-
         echo "🧹 Cleaning up original file..."
         rm -f "$downloaded_file"
 
@@ -63,4 +64,3 @@ while IFS= read -r video_url || [ -n "$video_url" ]; do
 done < "$url_file"
 
 echo "🎉 All videos processed from: $url_file"
-
